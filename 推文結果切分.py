@@ -1,6 +1,7 @@
 import csv
 import codecs
 import sqlite3
+import re
 from tqdm import tqdm
 
 """
@@ -11,12 +12,12 @@ from tqdm import tqdm
 
 def main():
 
-    with open(r'D:\\research\\資料\\推文資料\\推文資料_柯文哲.csv', 'r', encoding="utf-8") as csvFile:
+    with open(r'D:\\研究\\資料\\備份\\推文資料_柯文哲.csv', 'r', encoding="utf-8") as csvFile:
     
         rows = list(csv.reader(csvFile))
 
 
-        conn = sqlite3.connect(r'D:\\research\\data.db')
+        conn = sqlite3.connect(r'D:\\研究\\資料\\data_bk.db')
         print("Open database successfully")
 
         c = conn.cursor()
@@ -35,22 +36,22 @@ def main():
             
             push_author = step3[1]
             
-            if(step2[1]).find("[00-12]:[00-60]") > 0 :
+            if re.findall(r"(\d{2}):(\d{2})", step2[1]) != []:
                 time = step2[1][-5:]
             else:
                 time = ""
             
-            if(step2[1]).find("[01-12]/[01-31]") > 0 :
+            if re.findall(r"(\d{2})/(\d{2})", step2[1]) != [] :
                 date = step2[1][-11:-6]
             else:
                 date = ""
            
-            if(step2[1]).find("[000-999].[000-999].[000-999].[000-999]") > 0 :
+            if re.findall(r"(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])", step2[1]) != [] :
                 ip = step2[1][-28:-12]
             else:
                 ip = ""
 
-            push_comment = step2[1][0:-27].replace("', '", ',')
+            push_comment = step2[1][0:-27]
 
             #print(candidate, postID)
 
