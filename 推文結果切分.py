@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 def main():
 
-    with open(r'D:\\research\\資料\\推文資料\\推文資料_侯友宜.csv', 'r', encoding="utf-8") as csvFile:
+    with open(r'D:\\research\\資料\\推文資料\\推文資料_黃偉哲.csv', 'r', encoding="utf-8") as csvFile:
     
         rows = list(csv.reader(csvFile))
 
@@ -27,39 +27,36 @@ def main():
         for row in tqdm(rows):
             string = str(row)
             step1 = string.split("|")
-            step2 = step1[1].split(":",1)
-            step3 = step2[0].split(" ", 1)
+            step2 = re.split(" ", step1[1], 1)
+            step3 = re.split("[^a-zA-Z0-9]+", step2[1], 1)
 
             candidate = step1[0].replace("['", '')
-            
             postID = step1[2].replace("']", '')
             
-            push_type = step3[0]
-            
-            push_author = step3[1]
-            
+            push_type = step2[0]
+            push_author = step3[0]
+
             # 此處使用時間的正規表示法(\d{2}):(\d{2})
             if re.search(r"(\d{2}):(\d{2})", step2[1]) != None:
                 time = re.search(r"(\d{2}):(\d{2})", step2[1]).group()
             else:
                 time = ""
-            
+                
             # 此處使用日期的正規表示法(\d{2})/(\d{2})
             if re.search(r"(\d{2})/(\d{2})", step2[1]) != None:
                 date = re.search(r"(\d{2})/(\d{2})", step2[1]).group()
             else:
                 date = ""
-           
+            
             # 此處使用IP的正規表示法(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])
             if re.search(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])', step2[1]) != None:
                 ip = re.search(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])', step2[1]).group()
             else:
                 ip = ""
-
+                
             push_comment = re.sub(
-                "(\d{2}:\d{2})|(\d{2}/\d{2})|(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])", "", step2[1]).lstrip()  # 用re.sub取代時可以用|號來進行多個取代
-
-            #print(candidate, postID)
+                "(^[a-zA-Z0-9]+:)|(\d{2}:\d{2})|(\d{2}/\d{2})|(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])", "", step2[1]).lstrip()
+            # 用re.sub取代時可以用|號來進行多個取代
 
             #將結果存入sqlite
             #包含IP資訊
