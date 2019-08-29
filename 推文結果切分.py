@@ -14,11 +14,7 @@ from tqdm import tqdm
 
 def main():
 
-<<<<<<< HEAD
     with open(r'D:\\研究\\資料\\備份\\推文資料_柯文哲.csv', 'r', encoding="utf-8") as csvFile:
-=======
-    with open(r'D:\\research\\資料\\推文資料\\推文資料_黃偉哲.csv', 'r', encoding="utf-8") as csvFile:
->>>>>>> 2f8c54759aea7f1e1dd9a77879d94b2451a7497d
     
         rows = list(csv.reader(csvFile))
 
@@ -37,7 +33,6 @@ def main():
             candidate = step1[0].replace("['", '')
             postID = step1[2].replace("']", '')
             
-<<<<<<< HEAD
             push_type = step3[0]
             
             push_author = step3[1]
@@ -60,32 +55,6 @@ def main():
             push_comment = step2[1][0:-27]
 
             #print(candidate, postID)
-=======
-            push_type = step2[0]
-            push_author = step3[0]
-
-            # 此處使用時間的正規表示法(\d{2}):(\d{2})
-            if re.search(r"(\d{2}):(\d{2})", step2[1]) != None:
-                time = re.search(r"(\d{2}):(\d{2})", step2[1]).group()
-            else:
-                time = ""
-                
-            # 此處使用日期的正規表示法(\d{2})/(\d{2})
-            if re.search(r"(\d{2})/(\d{2})", step2[1]) != None:
-                date = re.search(r"(\d{2})/(\d{2})", step2[1]).group()
-            else:
-                date = ""
-            
-            # 此處使用IP的正規表示法(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])
-            if re.search(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])', step2[1]) != None:
-                ip = re.search(r'(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])', step2[1]).group()
-            else:
-                ip = ""
-                
-            push_comment = re.sub(
-                "(^[a-zA-Z0-9]+:)|(\d{2}:\d{2})|(\d{2}/\d{2})|(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])", "", step2[1]).lstrip()
-            # 用re.sub取代時可以用|號來進行多個取代
->>>>>>> 2f8c54759aea7f1e1dd9a77879d94b2451a7497d
 
             #將結果存入sqlite
             #包含IP資訊
