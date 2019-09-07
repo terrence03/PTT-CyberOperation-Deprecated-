@@ -46,11 +46,4 @@ else:
     ip = ""
 
 """
-if len(string) >= 27:
-    push_comment = string[0:23]
-elif len(string) >=
-#string = "５毛  嘘"
-#push_comment = string[0:-27]
-"""
-print(time, date, ip)
-"""
+
