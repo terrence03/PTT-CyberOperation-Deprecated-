@@ -14,12 +14,16 @@ from tqdm import tqdm
 
 def main():
 
+<<<<<<< HEAD
+    with open(r'D:\\研究\\資料\\備份\\推文資料_柯文哲.csv', 'r', encoding="utf-8") as csvFile:
+=======
     with open(r'D:\\research\\資料\\推文資料\\推文資料_黃偉哲.csv', 'r', encoding="utf-8") as csvFile:
+>>>>>>> 2f8c54759aea7f1e1dd9a77879d94b2451a7497d
     
         rows = list(csv.reader(csvFile))
 
 
-        conn = sqlite3.connect(r'D:\\research\\data.db')
+        conn = sqlite3.connect(r'D:\\研究\\資料\\data_bk.db')
         print("Open database successfully")
 
         c = conn.cursor()
@@ -33,6 +37,30 @@ def main():
             candidate = step1[0].replace("['", '')
             postID = step1[2].replace("']", '')
             
+<<<<<<< HEAD
+            push_type = step3[0]
+            
+            push_author = step3[1]
+            
+            if re.findall(r"(\d{2}):(\d{2})", step2[1]) != []:
+                time = step2[1][-5:]
+            else:
+                time = ""
+            
+            if re.findall(r"(\d{2})/(\d{2})", step2[1]) != [] :
+                date = step2[1][-11:-6]
+            else:
+                date = ""
+           
+            if re.findall(r"(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])", step2[1]) != [] :
+                ip = step2[1][-28:-12]
+            else:
+                ip = ""
+
+            push_comment = step2[1][0:-27]
+
+            #print(candidate, postID)
+=======
             push_type = step2[0]
             push_author = step3[0]
 
@@ -57,6 +85,7 @@ def main():
             push_comment = re.sub(
                 "(^[a-zA-Z0-9]+:)|(\d{2}:\d{2})|(\d{2}/\d{2})|(?<![\.\d])(?:\d{1,3}\.){3}\d{1,3}(?![\.\d])", "", step2[1]).lstrip()
             # 用re.sub取代時可以用|號來進行多個取代
+>>>>>>> 2f8c54759aea7f1e1dd9a77879d94b2451a7497d
 
             #將結果存入sqlite
             #包含IP資訊
