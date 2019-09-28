@@ -1,17 +1,12 @@
 #%%
 import sqlite3
 import pandas as pd
-import numpy as np
 from tqdm import tqdm
-import time
 
 # 讀入資料
-#start_time = time.time()
 with sqlite3.connect(r'E:\\research\\資料\\data.db') as con:
     data = pd.read_sql_query(
         "SELECT 文章ID,候選人,作者,文章IP,發文時間,推文類型,推文作者,推文內文,推文IP,推文時間 FROM 合併資料表", con=con)
-#end_time = time.time()
-#print('耗時: ', end_time-start_time, 'm')
 
 rows = data.shape[0]
 
@@ -95,4 +90,13 @@ total_info['總箭頭數'] = total_info['總留言數']-total_info['總推文數
 total_info['推文率'] = total_info['總推文數']/total_info['總留言數']
 total_info['噓文率'] = total_info['總噓文數']/total_info['總留言數']
 total_info['箭頭率'] = total_info['總箭頭數']/total_info['總留言數']
+
+total_info['總推文數'] = total_info['總推文數'].astype('int64')
+total_info['總噓文數'] = total_info['總噓文數'].astype('int64')
+total_info['總箭頭數'] = total_info['總箭頭數'].astype('int64')
+
 #%%
+# 輸出結果
+with sqlite3.connect(r'E:\\research\\資料\\data.db') as con:
+    data.to_sql(name='推文資料', con=con, if_exists='append', index=False)
+    total_info.to_sql(name='推文帳號資料', con=con, if_exists='append', index=False)
