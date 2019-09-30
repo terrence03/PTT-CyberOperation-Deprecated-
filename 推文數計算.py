@@ -9,7 +9,6 @@ with sqlite3.connect(r'E:\\research\\資料\\data.db') as con:
         "SELECT 文章ID,候選人,作者,文章IP,發文時間,推文類型,推文作者,推文內文,推文IP,推文時間 FROM 合併資料表", con=con)
 
 rows = data.shape[0]
-
 count_list = []
 net_upvote = 0
 for i in tqdm(range(rows)):
@@ -39,7 +38,7 @@ data['淨推數'] = count_list
 
 # %%
 # 計算留言帳號在每個作者下留言的機率
-count_comment = data.groupby(['推文作者', '作者', '推文類型'], as_index=False)[
+count_comment = data.groupby(['推文作者', '作者'], as_index=False)[
     '推文內文'].agg({'在此作者下的留言數': 'count'})
 
 sum_comment = count_comment.groupby(['推文作者'], as_index=False)[
@@ -48,10 +47,6 @@ sum_comment = count_comment.groupby(['推文作者'], as_index=False)[
 cross_comment = pd.merge(count_comment, sum_comment)
 cross_comment['在此作者下的留言機率'] = cross_comment['在此作者下的留言數']/cross_comment['總留言數']
 
-# 部分推文作者的帳號遺漏，最後將其刪除
-#error_list = cross_comment.index[cross_comment['推文作者'] == ''].tolist()
-#cross_comment.drop(error_list, inplace=True)
-#cross_comment.reset_index(drop=True, inplace=True)
 
 # %%
 # 計算推文帳號在每個作者下推文的機率
@@ -79,10 +74,6 @@ sum_dnvote = count_dnvote.groupby(['推文作者'], as_index=False)[
 cross_dnvote = pd.merge(count_dnvote, sum_dnvote)
 cross_dnvote['噓文機率'] = cross_dnvote['在此作者下的噓文數']/cross_dnvote['總噓文數']
 
-# 部分推文作者的帳號遺漏，最後將其刪除
-error_list = cross_dnvote.index[cross_dnvote['推文作者'] == ''].tolist()
-cross_dnvote.drop(error_list, inplace=True)
-cross_dnvote.reset_index(drop=True, inplace=True)
 
 # %%
 # 計算留言者的推文率，噓文率，箭頭率
@@ -106,7 +97,29 @@ total_info['總噓文數'] = total_info['總噓文數'].astype('int64')
 total_info['總箭頭數'] = total_info['總箭頭數'].astype('int64')
 
 # %%
+# 擴展cross_comment，加入計算再所有互動中對特定作者的推文、噓文和箭頭
+
+
+def get_All():
+    a = pd.merge(cross_comment, count_upvote, on=['推文作者', '作者'], how='left')
+    b = pd.merge(a, sum_upvote, on='推文作者', how='left')
+    b = b.fillna(0)
+    b['留言帳號推作者的機率'] = b['在此作者下的推文數']/b['總留言數']
+    c = pd.merge(b, count_dnvote, on=['推文作者', '作者'], how='left')
+    d = pd.merge(c, sum_dnvote, on='推文作者', how='left')
+    d = d.fillna(0)
+    d['留言帳號噓作者的機率'] = d['在此作者下的噓文數']/d['總留言數']
+    d['在此作者下的推文數'] = d['在此作者下的推文數'].astype('int64')
+    d['總推文數'] = d['總推文數'].astype('int64')
+    d['在此作者下的噓文數'] = d['在此作者下的噓文數'].astype('int64')
+    d['總噓文數'] = d['總噓文數'].astype('int64')
+    return d
+
+
+# %%
 # 輸出結果
 with sqlite3.connect(r'E:\\research\\資料\\data.db') as con:
-    data.to_sql(name='推文資料', con=con, if_exists='append', index=False)
-    total_info.to_sql(name='推文帳號資料', con=con, if_exists='append', index=False)
+    get_All().to_sql(name='推文帳號面貌', con=con, if_exists='append', index=False)
+
+
+#%%
