@@ -46,6 +46,7 @@ else:
     ip = ""
 
 """
+<<<<<<< HEAD
 if len(string) >= 27:
     push_comment = string[0:23]
 elif len(string) >= 0:
@@ -53,3 +54,6 @@ elif len(string) >= 0:
 #push_comment = string[0:-27]
 
 print(time, date, ip)
+=======
+
+>>>>>>> 80d879b175a2007c72c9200d3708764debf0c808
