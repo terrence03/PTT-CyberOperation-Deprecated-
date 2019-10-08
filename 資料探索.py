@@ -3,12 +3,14 @@ import sqlite3
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import networkx as nx
+import time
 
 database = r'E:\\research\\資料\\data.db'
 #database = r'D:\\研究\\選舉研究\\資料\\data.db'
 
 # %%
-with sqlite3.connect(path) as con:
+with sqlite3.connect(database) as con:
     df_push = pd.read_sql('SELECT * FROM 推文帳號互動概況', con=con)
 
 df_push.drop([0, 1, 2], inplace=True)
@@ -64,7 +66,9 @@ df_network_ip_cut.columns = ['帳號', 'IP']
 df_network_ip = pd.concat([df_network_ip, df_network_ip_cut])
 df_network_ip.drop_duplicates(inplace=True)
 df_network_ip.reset_index(drop=True, inplace=True)
+
 # %%
+
 column_edge = 'IP'
 column_ID = '帳號'
 
@@ -77,8 +81,20 @@ d = data_to_merge[~(data_to_merge[column_ID] == data_to_merge[column_ID+"_2"])] 
 
 d.drop(d.loc[d[column_ID+"_2"] < d[column_ID]].index.tolist(), inplace=True)
 
-d.to_csv('edge.csv')
+#d.to_csv('edge.csv')
 #%%
+test = d[:100]
+account = df_network_ip['帳號'].drop_duplicates()
 
+start_time = time.time()
 
+G = nx.from_pandas_edgelist(df=test, source=column_ID, target=column_ID+'_2', edge_attr=column_edge)
+
+G.add_nodes_from(nodes_for_adding=account.tolist())
+
+print(nx.draw(G))
+
+end_time = time.time()
+
+print("It cost %f sec" % (end_time - start_time))
 #%%
