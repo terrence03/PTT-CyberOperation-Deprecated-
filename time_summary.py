@@ -143,7 +143,7 @@ hour_cnt.rename(columns={'postID': 'count'}, inplace=True)
 
 # %%
 # 繪圖顯示留言時間分佈
-plt.figure(figsize=(10, 12))
+plt.figure(figsize=(10, 12), dpi=300)
 
 # 上線星期
 plt.subplot(2, 1, 1)
@@ -170,6 +170,7 @@ plt.ylabel('Frequency')
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
 plt.title('Hour')
 
+plt.savefig(r'E:\\research\\data\\圖庫\\frequency.png')
 plt.show()
 
 # %%
