@@ -121,8 +121,8 @@ df = pd.concat([df, data])
 df.sort_values('Author', inplace=True)
 df.reset_index(drop=True, inplace=True)
 
-with sqlite3.connect(r'E:\\research\\data\\sql\\data.db') as con:
-    df.to_sql('onlinetime', con=con, index=False)
+#with sqlite3.connect(r'E:\\research\\data\\sql\\data.db') as con:
+#    df.to_sql('onlinetime', con=con, index=False)
 
 
 
@@ -170,7 +170,7 @@ plt.ylabel('Frequency')
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
 plt.title('Hour')
 
-plt.savefig(r'E:\\research\\data\\圖庫\\frequency.png')
+plt.savefig(r'E:\\research\\data\\圖庫\\frequency_all.png')
 plt.show()
 
 # %%

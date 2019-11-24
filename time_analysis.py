@@ -31,37 +31,41 @@ df_H = df[['Author']].join(H_dummy)
 df_H_group = df_H.groupby(['Author'], as_index=False)
 
 df_H_sum = df_H_group.sum()
-df_H_sum[df_H_sum.columns[1: 25].tolist()] = df_H_sum[df_H_sum.columns[1: 25].tolist()].astype('int')
+df_H_sum[df_H_sum.columns[1: 25].tolist(
+)] = df_H_sum[df_H_sum.columns[1: 25].tolist()].astype('int')
 
 df_H_sum['sum'] = df_H_sum.sum(axis=1).astype('int')
 
 df_H_precentage = df_H_group.mean()
 
 # %%
-mask = (df_H_precentage['Hour_14'] > 0.1)
-#df_H_precentage.loc[mask]
 
-A_list = df_H_precentage.loc[mask][['Author']]
-A_list = pd.merge(A_list, df_H_sum, how='left', on='Author')
-del A_list['sum']
+def get_H_avgprecentage(DataFrame):
+    h = 'Hour_'
+    n = list(range(0, 24))
+
+    avg_precentage_value = []
+    for c in range(24):
+        cc = h + str(n[c])
+        avg_precentage_value.append(DataFrame[cc].mean())
+
+    return avg_precentage_value
+
+
+def get_W_avgprecentage(DataFrame):
+    w = 'Weekday_'
+    n = list(range(1, 8))
+
+    avg_precentage_value = []
+    for c in range(7):
+        cc = w + str(n[c])
+        avg_precentage_value.append(DataFrame[cc].mean())
+
+    return avg_precentage_value
 
 
 # %%
-list1 = []
-for i in range(1, 25):
-    col = A_list.columns.tolist()[i]
-    su = A_list[col].sum()
-    list1.append(su)
-
-
-# %%
-plt.figure(figsize=(10, 6), dpi=72)
-x = list(range(24))
-y = list1
-plt.plot(x, y, 'o-', label='count')
-
-
-# %%
+# 加入網軍名單
 def clean_namelist(filename):
     with open(filename, 'r', encoding='utf-8') as file:
         result = file.read()
@@ -83,50 +87,44 @@ def clean_namelist(filename):
     return namelist1
 
 
-namelist = pd.DataFrame(clean_namelist(r'E:\\research\\data\\砍除帳號名單.txt'), columns=['Author'])
+namelist = pd.DataFrame(clean_namelist(
+    r'E:\\research\\data\\砍除帳號名單.txt'), columns=['Author'])
+
+df_W_precentage_cy = pd.merge(
+    namelist, df_W_precentage, how='left', on='Author')
+df_W_precentage_cy.dropna(inplace=True)
+
+df_H_precentage_cy = pd.merge(
+    namelist, df_H_precentage, how='left', on='Author')
+df_H_precentage_cy.dropna(inplace=True)
 
 # %%
-df_namelist = pd.merge(namelist, df, how='left', on='Author')
-df_namelist.dropna(inplace=True)
-
-
-weekday_cnt = df_namelist[['Weekday', 'postID']].groupby(
-    ['Weekday'], as_index=False).count()
-weekday_cnt.rename(columns={'postID': 'count'}, inplace=True)
-
-hour_cnt = df_namelist[['Hour', 'postID']].groupby(
-    ['Hour'], as_index=False).count()
-hour_cnt.rename(columns={'postID': 'count'}, inplace=True)
-
-# %%
-plt.figure(figsize=(10, 12), dpi=300)
+fig = plt.figure(figsize=(10, 12), dpi=300)
 
 plt.subplot(2,1,1)
-
-x_weekday = weekday_cnt['Weekday']
-y_weekday = weekday_cnt['count']
-plt.plot(x_weekday, y_weekday, 'o-', label='count')
-plt.xticks(range(1, 8))
+plt.plot(list(range(1,8)), get_W_avgprecentage(
+    df_W_precentage), 'o-', label='nomal_user')
+plt.plot(list(range(1,8)), get_W_avgprecentage(
+    df_W_precentage_cy), 's-', label='cyber_army')
+plt.legend()
+plt.xticks(range(1,8))
 plt.xlabel('Weekday')
-plt.ylabel('Frequency')
+plt.ylabel('Frequency%')
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
-plt.title('Weekday')
+plt.title('online%')
 
-# 上線時間
-plt.subplot(2, 1, 2)
-
-x_hour = hour_cnt['Hour']
-y_hour = hour_cnt['count']
-
-plt.plot(x_hour, y_hour, 'o-', label='count')
+plt.subplot(2,1,2)
+plt.plot(list(range(24)), get_H_avgprecentage(
+    df_H_precentage), 'o-', label='nomal_user')
+plt.plot(list(range(24)), get_H_avgprecentage(
+    df_H_precentage_cy), 's-', label='cyber_army')
+plt.legend()
 plt.xticks(range(24))
-plt.xlabel('Time of Day')
-plt.ylabel('Frequency')
+plt.xlabel('Time of day')
+plt.ylabel('Frequency%')
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
-plt.title('Hour')
+plt.title('online%')
 
-plt.savefig(r'E:\\research\\data\\圖庫\\frequency_ca.png')
+#plt.savefig(r'E:\\research\\data\\圖庫\\frequency_vs.png')
 plt.show()
-
-
-# %%
+#
