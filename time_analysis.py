@@ -99,7 +99,7 @@ hour_cnt = df_namelist[['Hour', 'postID']].groupby(
 hour_cnt.rename(columns={'postID': 'count'}, inplace=True)
 
 # %%
-plt.figure(figsize=(10, 12), dpi=72)
+plt.figure(figsize=(10, 12), dpi=300)
 
 plt.subplot(2,1,1)
 
@@ -125,7 +125,7 @@ plt.ylabel('Frequency')
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
 plt.title('Hour')
 
-plt.savefig(r'E:\\research\\data\\圖庫\\frequency.png')
+plt.savefig(r'E:\\research\\data\\圖庫\\frequency_ca.png')
 plt.show()
 
 
