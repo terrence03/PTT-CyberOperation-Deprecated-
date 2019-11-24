@@ -127,4 +127,3 @@ plt.title('online%')
 
 #plt.savefig(r'E:\\research\\data\\圖庫\\frequency_vs.png')
 plt.show()
-#
