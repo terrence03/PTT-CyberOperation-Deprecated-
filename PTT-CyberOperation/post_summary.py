@@ -10,14 +10,18 @@ import re
 import numpy as np
 
 # 匯入文章資料
-with sqlite3.connect(r'D:\\research\\data\\sql\\analysis.db') as con:
+#data_path = r'D:\\research\\data\\sql\\analysis.db'
+data_path = r'D:\\研究\\選舉研究\\analysis.db'
+#data_path_kw = r'E:\\research\\data\\候選人資料\\候選人關鍵字對照表.xlsx'
+data_path_kw = r'D:\\研究\\選舉研究\\資料\\候選人資料\\候選人關鍵字對照表.xlsx'
+
+with sqlite3.connect(data_path) as con:
     df = pd.read_sql('SELECT * FROM original_post', con)
 
 df['post_Datetime'] = df['post_Datetime'].map(
     lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))    # 時間轉為datetime格式
 
-keyword = pd.read_excel(
-    r'E:\\research\\data\\候選人資料\\候選人關鍵字對照表.xlsx', '工作表1')  # 匯入候選人關鍵字對照表
+keyword = pd.read_excel(data_path_kw, '工作表1')  # 匯入候選人關鍵字對照表
 candidate_list = keyword['候選人'].drop_duplicates().tolist()   # 建立候選人列表
 candidate_list_in = df['Candidate'].drop_duplicates(
 ).tolist()  # 建立資料中出現過的候選人列表
@@ -63,7 +67,7 @@ fillkeywords()  # 填滿空的關鍵字欄
 
 # %%
 # 匯入留言資料
-with sqlite3.connect(r'D:\\research\\data\\sql\\analysis.db') as con:
+with sqlite3.connect(data_path) as con:
     data = pd.read_sql('SELECT * FROM original_push', con)
     data = pd.merge(df, data, 'left', 'post_ID')    # 將文章資料和留言資料結合
 
@@ -141,16 +145,13 @@ def get_quantile_from_candidate(candidate, quantile, lower_limit=0):
     return ca
 
 
-def get_CyberArmy90():
-    CyberArmy90 = None
-    for i in candidate_list:
-        CyberArmy90 = pd.concat(
-            [CyberArmy90, get_quantile_from_candidate(i, 0.9, 10)])
+
+CyberArmy80 = None
+for c in candidate_list:
+    CyberArmy80 = pd.concat([CyberArmy80, get_quantile_from_candidate(c, 0.8, 10)])
 
     # CyberArmy90['Region'] = CyberArmy90['Candidate'].map(lambda x: area_dict[x])
-    CyberArmy90 = CyberArmy90[['Candidate', 'com_User', 'com_Content']]
-
-    return CyberArmy90
+CyberArmy80 = CyberArmy80[['Candidate', 'com_User', 'com_Content']]
 
 
 '''
@@ -159,7 +160,6 @@ area_dict = {}
   for name, region in zip(area['姓名'], area['地區']):
     area_dict[name] = region
 '''
-CyberArmy90 = get_CyberArmy90()
 # %%
 data_1 = data[['keywords', 'com_Type', 'com_User']]
 data_1.dropna(inplace=True)
@@ -180,65 +180,11 @@ def get_Polarity(text):
 
 
 # %%
-CyberArmy90.dropna(inplace=True)
-CyberArmy90['text'] = CyberArmy90['Candidate'] + ',' + CyberArmy90['com_User']
-CyberArmy90['Polarity'] = CyberArmy90['text'].apply(lambda x: get_Polarity(x))
+CyberArmy80.dropna(inplace=True)
+CyberArmy80['text'] = CyberArmy80['Candidate'] + ',' + CyberArmy80['com_User']
+CyberArmy80['Polarity'] = CyberArmy80['text'].apply(lambda x: get_Polarity(x))
 
-#del CyberArmy90['text']
-# %%
-CyberArmy90_tpe = CyberArmy90[CyberArmy90['Region'] == '臺北市']
-
-
-# %%
-trans_data_Ko = CyberArmy90_tpe[CyberArmy90_tpe['Candidate'] == '柯文哲'][['com_Content','Polarity']]
-sns.regplot('com_Content', 'Polarity', trans_data_Ko, color='r',)
-plt.title('Ko')
-
-# %%
-x = trans_data_Ko['com_Content']
-y = trans_data_Ko['Polarity']
-z = np.polyfit(x, y, 1)
-p = np.poly1d(z)
-#sns.regplot('com_Content', 'Polarity', trans_data, color='r',)
-plt.plot(x, p(x), 'b--')
-plt.scatter(x, y, alpha=0.6)
-plt.title('Ko')
-plt.show()
-
-
-# %%
-trans_data_Yao = CyberArmy90_tpe[CyberArmy90_tpe['Candidate'] == '姚文智'][[
-    'com_Content', 'Polarity']]
-sns.regplot('com_Content', 'Polarity', trans_data_Yao, color='r',)
-plt.title('Yao')
-
-# %%
-x = trans_data_Yao['com_Content']
-y = trans_data_Yao['Polarity']
-z = np.polyfit(x, y, 1)
-p = np.poly1d(z)
-#sns.regplot('com_Content', 'Polarity', trans_data, color='r',)
-plt.plot(x, p(x), 'b--')
-plt.scatter(x, y, alpha=0.6)
-plt.title('Yao')
-plt.show()
-
-# %%
-trans_data_Ting = CyberArmy90_tpe[CyberArmy90_tpe['Candidate'] == '丁守中'][[
-    'com_Content', 'Polarity']]
-sns.regplot('com_Content', 'Polarity', trans_data_Ting, color='r',)
-plt.title('Ting')
-
-# %%
-x = trans_data_Ting['com_Content']
-y = trans_data_Ting['Polarity']
-z = np.polyfit(x, y, 1)
-p = np.poly1d(z)
-#sns.regplot('com_Content', 'Polarity', trans_data, color='r',)
-plt.plot(x, p(x), 'b--')
-plt.scatter(x, y, alpha=0.6)
-plt.title('Yao')
-plt.show()
+del CyberArmy80['text']
 
 
 # %%
