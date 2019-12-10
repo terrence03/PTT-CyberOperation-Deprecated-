@@ -10,18 +10,18 @@ polarity = df.groupby(['com_User', 'Region', 'party'],
                       as_index=False)[['Polarity']].sum()
 
 # %%
-polarity['KMT'] = np.nan
-polarity['DPP'] = np.nan
-polarity['OTHER'] = np.nan
+polarity["KMT"] = np.nan
+polarity["DPP"] = np.nan
+polarity["OTHER"] = np.nan
 
 
 def fill_pol2par():
-    for i in tqdm(range(len(polarity['com_User']))):
-        if polarity.iloc[i, 2] == 'KMT':
+    for i in tqdm(range(len(polarity["com_User"]))):
+        if polarity.iloc[i, 2] == "KMT":
             polarity.iloc[i, 4] = polarity.iloc[i, 3]
-        elif polarity.iloc[i, 2] == 'DPP':
+        elif polarity.iloc[i, 2] == "DPP":
             polarity.iloc[i, 5] = polarity.iloc[i, 3]
-        elif polarity.iloc[i, 2] == 'OTHER':
+        elif polarity.iloc[i, 2] == "OTHER":
             polarity.iloc[i, 6] = polarity.iloc[i, 3]
 
 
@@ -30,23 +30,24 @@ fill_pol2par()
 polarity = polarity.groupby(['Region', 'com_User'], as_index=False)[
     ['KMT', 'DPP', 'OTHER']].sum()
 
-polarity['sum'] = (polarity['KMT'] + polarity['DPP'] + polarity['OTHER'])
+polarity["sum"] = polarity["KMT"] + polarity["DPP"] + polarity["OTHER"]
 
 # %%
-polarity['prefer'] = np.nan
-polarity['prefer_value'] = np.nan
+polarity["prefer"] = np.nan
+polarity["prefer_value"] = np.nan
+
 
 
 def oversum():
-    for i in tqdm(range(len(polarity['com_User']))):
+    for i in tqdm(range(len(polarity["com_User"]))):
         if polarity.iloc[i, 2] > polarity.iloc[i, 5]:
-            polarity.iloc[i, 6] = 'KMT'
+            polarity.iloc[i, 6] = "KMT"
             polarity.iloc[i, 7] = polarity.iloc[i, 2] - polarity.iloc[i, 5]
         elif polarity.iloc[i, 3] > polarity.iloc[i, 5]:
-            polarity.iloc[i, 6] = 'DPP'
+            polarity.iloc[i, 6] = "DPP"
             polarity.iloc[i, 7] = polarity.iloc[i, 3] - polarity.iloc[i, 5]
         elif polarity.iloc[i, 4] > polarity.iloc[i, 5]:
-            polarity.iloc[i, 6] = 'OTHER'
+            polarity.iloc[i, 6] = "OTHER"
             polarity.iloc[i, 7] = polarity.iloc[i, 4] - polarity.iloc[i, 5]
         else:
             polarity.iloc[i, 6] = np.nan
