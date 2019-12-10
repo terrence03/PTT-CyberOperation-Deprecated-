@@ -6,11 +6,9 @@ from matplotlib import pyplot as plt
 
 data_path = r'E:\\research\\data\\候選人資料\\活躍百分位數0.9_留言下限10則_文章不限單一候選人.xlsx'
 df = pd.read_excel(data_path, sheet_name='Sheet1')
-
+polarity = df.groupby(['com_User','Region', 'party'], as_index=False)[['Polarity']].sum()
 
 # %%
-polarity = df.groupby(['Region','com_User', 'party'], as_index=False)[['Polarity']].sum()
-
 polarity['KMT'] = np.nan
 polarity['DPP'] = np.nan
 polarity['OTHER'] = np.nan
@@ -52,5 +50,23 @@ def oversum():
             polarity.iloc[i, 6] = np.nan
 
 oversum()
+
+# %%
+def prefer_party(DateFrame, Criterion=1):
+    polarity_1 = DateFrame.groupby(['com_User', 'Region'], as_index=False)['Polarity'].sum()
+    polarity_1 = pd.merge(DateFrame, polarity_1, 'left', ['com_User', 'Region'])
+    polarity_1['perfer_party'] = np.nan
+    polarity_1['perfer_value'] = np.nan
+
+    for i in tqdm(range(len(polarity_1['com_User']))):
+        if polarity_1.iloc[i, 3] >= polarity_1.iloc[i, 4]*Criterion and polarity_1.iloc[i, 3] > 0:
+            polarity_1.iloc[i, 5] = polarity_1.iloc[i, 2]
+            polarity_1.iloc[i, 6] = polarity_1.iloc[i, 3] - polarity_1.iloc[i, 4]
+        
+        else:
+            polarity_1.iloc[i, 5] = np.nan
+
+    return polarity_1
+
 
 # %%

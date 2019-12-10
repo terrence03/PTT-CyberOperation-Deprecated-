@@ -41,8 +41,22 @@ np.mean(accompany['percentage'])
 np.median(accompany['percentage'])
 stats.mode(accompany['percentage'])[0][0]
 
+# %%
 test1 = accompany.loc[(accompany['count_1_y'] >= 5)]
 test2 = accompany.loc[(accompany['count_1_y'] >= 10)]
+
+test1_user = set(test1.loc[(test1['percentage'] >= 0.3)]['com_User'].tolist())
+test1_author = set(
+    test1.loc[(test1['percentage'] >= 0.3)]['post_Author'].tolist())
+test2_user = set(test2.loc[(test2['percentage'] >= 0.3)]['com_User'].tolist())
+test2_author = set(
+    test2.loc[(test2['percentage'] >= 0.3)]['post_Author'].tolist())
+
+
+def test_in_calist(namelist):
+    ca = pd.read_excel(r'E:\\research\\data\\候選人資料\\ca.xlsx')
+    mask = (ca['com_User'].isin(namelist))
+    return ca.loc[mask]
+
+
 # %%
-test1.loc[(test1['percentage'] >= 0.3)]
-test2.loc[(test2['percentage'] >= 0.3)]
