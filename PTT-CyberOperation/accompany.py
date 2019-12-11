@@ -1,4 +1,6 @@
 # %%
+import matplotlib.pyplot as plt
+import networkx as nx
 from scipy import stats
 import sqlite3
 import pandas as pd
@@ -48,22 +50,23 @@ def get_nodelist(DataFrame, count_over_than=0, percentage_over_than=0.3):
     User_list = list(set(df_totest['com_User']))
     Author_list = list(set(df_totest['post_Author']))
     node_list = list(set(User_list+Author_list))
-    
+
     return node_list
+
 
 def get_edgelist(DataFrame, count_over_than=0, percentage_over_than=0.3):
     mask = (DataFrame['count_com_1'] >= count_over_than) & (
         DataFrame['com_%'] >= percentage_over_than)
     df_totest = DataFrame.loc[mask]
-    zipped = zip(df_totest['com_User'].tolist(), df_totest['post_Author'].tolist())
+    zipped = zip(df_totest['com_User'].tolist(),
+                 df_totest['post_Author'].tolist())
 
     return list(zipped)
 
+
 # %%
-import networkx as nx
-import matplotlib.pyplot as plt
 G = nx.Graph()
-G.add_nodes_from(get_nodelist(data,2))
-G.add_edges_from(get_edgelist(data,2))
+G.add_nodes_from(get_nodelist(data, 2))
+G.add_edges_from(get_edgelist(data, 2))
 nx.draw(G)
 # %%
