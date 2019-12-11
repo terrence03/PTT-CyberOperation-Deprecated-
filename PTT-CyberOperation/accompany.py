@@ -6,7 +6,7 @@ import numpy as np
 
 
 # %%
-db_path = r'D:\\研究\\選舉研究\\analysis.db'
+db_path = r'D:\\research\\data\\sql\\analysis.db'
 with sqlite3.connect(db_path) as con:
     post = pd.read_sql(
         'SELECT post_ID, post_Author, post_IP FROM original_post', con)
@@ -21,7 +21,6 @@ data.drop(data[data['com_User'] == ''].index.tolist(), inplace=True)
 data.dropna(inplace=True)
 data['count'] = 1
 
-# %%
 data = data.groupby(['post_ID', 'post_Author', 'com_User'],
                     as_index=False)[['count']].count()
 data['count_1'] = 1
@@ -30,30 +29,9 @@ data = data.groupby(['com_User', 'post_Author'], as_index=False)[
     ['count_1']].sum()
 sum_user = data.groupby('com_User', as_index=False)[['count_1']].sum()
 
-
-# %%
-sum_user = sum_user.loc[(sum_user['count_1'] > 1)]
-ulist = sum_user['com_User'].tolist()
-sum_user2author = sum_user2author.loc[(
-    sum_user2author['com_User'].isin(ulist))]
-
-
-# %%
-accompany = pd.merge(sum_user2author, sum_user, 'left', 'com_User')
-accompany['percentage'] = accompany['count_1_x']/accompany['count_1_y']
-
-
-# %%
-np.mean(accompany['percentage'])
-np.median(accompany['percentage'])
-stats.mode(accompany['percentage'])[0][0]
-
-
-# %%
-test1 = accompany.loc[(accompany['count_1_y'] >= 5)]
-test2 = accompany.loc[(accompany['count_1_y'] >= 10)]
-
-
+data = pd.merge(data, sum_user, 'left', 'com_User')
+data.columns = ['com_User', 'post_Author', 'count_com_1', 'sum_com_1']
+data['com_%'] = data['count_com_1']/data['sum_com_1']
 # %%
 
 
@@ -63,12 +41,29 @@ def test_in_calist(namelist):
     return ca.loc[mask]
 
 
+def get_nodelist(DataFrame, count_over_than=0, percentage_over_than=0.3):
+    mask = (DataFrame['count_com_1'] >= count_over_than) & (
+        DataFrame['com_%'] >= percentage_over_than)
+    df_totest = DataFrame.loc[mask]
+    User_list = list(set(df_totest['com_User']))
+    Author_list = list(set(df_totest['post_Author']))
+    node_list = list(set(User_list+Author_list))
+    
+    return node_list
+
+def get_edgelist(DataFrame, count_over_than=0, percentage_over_than=0.3):
+    mask = (DataFrame['count_com_1'] >= count_over_than) & (
+        DataFrame['com_%'] >= percentage_over_than)
+    df_totest = DataFrame.loc[mask]
+    zipped = zip(df_totest['com_User'].tolist(), df_totest['post_Author'].tolist())
+
+    return list(zipped)
 
 # %%
-test1.loc[(test1['percentage'] >= 0.3)]
-
+import networkx as nx
+import matplotlib.pyplot as plt
+G = nx.Graph()
+G.add_nodes_from(get_nodelist(data,2))
+G.add_edges_from(get_edgelist(data,2))
+nx.draw(G)
 # %%
-import igraph as ig
-import cairo
-import time
-
