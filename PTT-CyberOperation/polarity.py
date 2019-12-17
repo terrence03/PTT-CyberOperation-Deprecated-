@@ -65,6 +65,14 @@ def prefer_party(DateFrame, Criterion, multiple=1):
     elif Criterion == 'max':
         polarity_1 = DateFrame.groupby(['com_User', 'Region'], as_index=False)[
             'Polarity'].max()
+    elif Criterion == 'sum&max':
+        polarity_1 = DateFrame.groupby(['com_User', 'Region'], as_index=False)[
+            'Polarity'].agg({'sum': 'sum', 'max': 'max'})
+        polarity_1['sum&max'] = np.nan
+        for s in range(len(polarity_1['com_User'])):
+            polarity_1.iloc[s, 4] = max([polarity_1.iloc[s, 2], polarity_1.iloc[s, 3]])
+        del polarity_1['sum']
+        del polarity_1['max']
 
     polarity_1 = pd.merge(DateFrame, polarity_1, 'left',
                           ['com_User', 'Region'])
@@ -86,6 +94,9 @@ def prefer_party(DateFrame, Criterion, multiple=1):
     elif Criterion == 'max':
          polarity_1.columns = ['com_User', 'Region', 'party',
                                'Polarity', 'Polarity_max', 'prefer_party', 'prefer_value']
+    elif Criterion == 'max':
+         polarity_1.columns = ['com_User', 'Region', 'party',
+                               'Polarity', 'Polarity_sum&max', 'prefer_party', 'prefer_value']    
     
     print('共有: ' + str(len(set(polarity_1.dropna()['com_User']))) + ' 個用戶')
     return polarity_1.dropna()

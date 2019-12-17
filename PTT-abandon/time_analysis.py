@@ -5,12 +5,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import datetime
 
-with sqlite3.connect(r'E:\\research\\data\\sql\\data.db') as con:
+with sqlite3.connect(r'E:\\research\\data\\data\\data.db') as con:
     df = pd.read_sql(
         'SELECT Author,postID, time, Weekday, Hour FROM onlinetime', con)
 
-
-pd.set_option('precision', 3)
 
 # %%
 W_dummy = pd.get_dummies(df[['Author', 'Weekday']]
@@ -87,8 +85,11 @@ def clean_namelist(filename):
     return namelist1
 
 
-namelist = pd.DataFrame(clean_namelist(
-    r'E:\\research\\data\\砍除帳號名單.txt'), columns=['Author'])
+#namelist = pd.DataFrame(clean_namelist(
+#    r'E:\\research\\data\\砍除帳號名單.txt'), columns=['Author'])
+namelist = pd.read_excel(r'D:\\research\\data\\alldata\\fin.xlsx')
+namelist = namelist[['com_User_y']]
+namelist.columns = ['Author']
 
 df_W_precentage_cy = pd.merge(
     namelist, df_W_precentage, how='left', on='Author')
@@ -125,5 +126,7 @@ plt.ylabel('Frequency%')
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
 plt.title('online%')
 
-#plt.savefig(r'E:\\research\\data\\圖庫\\frequency_vs.png')
+plt.savefig(r'E:\\research\\data\\圖庫\\frequency_vs_2.png')
 plt.show()
+
+# %%
