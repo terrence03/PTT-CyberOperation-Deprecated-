@@ -32,6 +32,8 @@ df_cand_info = pd.read_excel(path+'candidate_info.xlsx')
 Type = {'推': 1, '→': 0, '噓': -1}
 df_com['com_Type'] = df_com['com_Type'].map(lambda x: Type[x])
 
+
+
 # %%
 #############################
 #####    篩選條件設定    #####
@@ -115,6 +117,15 @@ df_merge.dropna(inplace=True)
 df_merge.drop(df_merge[df_merge['com_User'] ==
                        ''].index.tolist(), inplace=True)
 
+# 將id轉換為數字
+account_list = list(set(set(df_merge['post_Author'])|set(df_merge['com_User'])))
+account_dict = {}
+for ac in range(len(account_list)):
+    account_dict[account_list[ac]] = ac
+df_merge['com_User'] = df_merge['com_User'].map(lambda x: account_dict[x])
+df_merge['post_Author'] = df_merge['post_Author'].map(lambda x: account_dict[x])
+
+account_dict_i = dict(zip(account_dict.values(),account_dict.keys()))
 
 def get_candidate_summary(candidate):
     '''
@@ -495,10 +506,12 @@ percentage_fliter = condition4_3
 
 # 繪製社群網路圖
 G = nx.Graph()
-G.add_nodes_from(get_nodelist(df_acc, count_fliter,
-                              sum_fliter, percentage_fliter))
-G.add_edges_from(get_edgelist(df_acc, count_fliter,
-                              sum_fliter, percentage_fliter))
+node_list = get_nodelist(df_acc, count_fliter, sum_fliter, percentage_fliter)
+edge_list = get_edgelist(df_acc, count_fliter, sum_fliter, percentage_fliter)
+
+
+G.add_nodes_from(node_list)
+G.add_edges_from(edge_list)
 
 nx.graph_number_of_cliques(G)
 partition = community.best_partition(G)
@@ -506,12 +519,11 @@ partition = community.best_partition(G)
 pos = nx.spring_layout(G)
 plt.figure(figsize=(8, 8), dpi=72)
 plt.axis('off')
-nx.draw_networkx_nodes(G, pos, node_size=20,
-                       cmap=plt.cm.RdYlBu, node_color=list(partition.values()))
+nx.draw_networkx_nodes(G, pos, node_size=20, cmap=plt.cm.RdYlBu, node_color=list(partition.values()), label=account_dict_i)
 nx.draw_networkx_edges(G, pos, alpha=0.3)
 
-nx.write_gexf(G, r'E:\\research\\data\\圖庫\\test_4.gexf')
-# plt.show(G)
+nx.write_gexf(G, r'E:\\research\\data\\圖庫\\test_5.gexf')
+#nx.draw(G)
 
 
 # %%
