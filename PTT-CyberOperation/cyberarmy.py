@@ -33,26 +33,25 @@ Type = {'推': 1, '→': 0, '噓': -1}
 df_com['com_Type'] = df_com['com_Type'].map(lambda x: Type[x])
 
 
-
 # %%
 #############################
 #####    篩選條件設定    #####
 #############################
 
 # 條件一 活躍程度
-condition1_1 = 0.5  # 前多少%的活躍用戶
-condition1_2 = 2    # 用戶留言下限則數(每則留言算作1則)
+condition1_1 = 0.9  # 前多少%的活躍用戶
+condition1_2 = 5    # 用戶留言下限則數(每則留言算作1則)
 
 # 條件二 偏好程度
-condition2_1 = 'sum&max'    # 用什麼方式決定改用戶偏好某政黨
+condition2_1 = 'max'    # 用什麼方式決定改用戶偏好某政黨
 
 # 條件三 上線時長
-condition3_1 = 59.10    # 取多少秒的反應時間作為篩選標準
+condition3_1 = 120    # 取多少分鐘的反應時間作為篩選標準
 
 # 條件四 死忠程度
 condition4_1 = 2    # 此值會過濾掉留言者對作者留言次數過低的樣本，網軍此值理論上比一般人高
-condition4_2 = 2    # 此值會過濾掉留言者總留言次數過低的樣本
-condition4_3 = 0.2  # 此值會過濾掉留言者對作者留言機率過低的樣本，網軍此值理論上比一般人高
+condition4_2 = 20    # 此值會過濾掉留言者總留言次數過低的樣本
+condition4_3 = 0.05  # 此值會過濾掉留言者對作者留言機率過低的樣本，網軍此值理論上比一般人高
 
 
 # %%
@@ -126,6 +125,8 @@ df_merge['com_User'] = df_merge['com_User'].map(lambda x: account_dict[x])
 df_merge['post_Author'] = df_merge['post_Author'].map(lambda x: account_dict[x])
 
 account_dict_i = dict(zip(account_dict.values(),account_dict.keys()))
+
+
 
 def get_candidate_summary(candidate):
     '''
@@ -225,32 +226,15 @@ def get_active_data(quantile, lower_limit=0):
 
 test70 = get_active_data(condition1_1, condition1_2)    # ★第一條件篩選結果
 test70.dropna(inplace=True)
-'''
-下面的程式碼正在調整中
 
-data_1 = data[['keywords', 'com_Type', 'com_User']]
-data_1.dropna(inplace=True)
-
-
-def get_polarity(text):
-    candidate = text.split(',')[0]
-    user = text.split(',')[1]
-    select = (data_1['com_User'] == user) & (
-        data_1['keywords'].str.contains(candidate))
-    d = data_1.loc[select]
-    polarity = d['com_Type'].sum()
-
-    return polarity
-
-
-
-CyberArmy80.dropna(inplace=True)
-CyberArmy80['text'] = CyberArmy80['Candidate'] + ',' + CyberArmy80['com_User']
-CyberArmy80['polarity'] = CyberArmy80['text'].apply(lambda x: get_polarity(x))
-
-del CyberArmy80['text']
-'''
-
+active_com = df_merge.groupby('com_User', as_index=False)[
+    'com_Content'].count()
+active_com90 = active_com.loc[(
+    active_com['com_Content'] >= active_com['com_Content'].quantile(0.9))]
+active_com90 = pd.merge(
+    active_com90, df_merge[['com_User', 'Region']].drop_duplicates(), on='com_User')
+active_com90 = active_com90[['com_User', 'Region', 'com_Content']]
+active_com90.columns = ['com_User', 'Region', 'n_com']
 
 # %%
 ##############################
@@ -258,6 +242,7 @@ del CyberArmy80['text']
 ##############################
 
 # 實際上是在條件一的名單上，加入每個帳號在每個地區的偏好政黨，並刪掉一些沒有較明顯偏好的帳號
+
 
 def prefer_party(DateFrame, Criterion, multiple=1):
     '''
@@ -278,13 +263,17 @@ def prefer_party(DateFrame, Criterion, multiple=1):
     else:
         df = DateFrame
 
-    if Criterion == 'sum':
+    if Criterion == 'r_sum':
         data = df.groupby(['com_User', 'Region'], as_index=False)[
             'polarity'].sum()
-    elif Criterion == 'max':
+    elif Criterion == 'sum':
+        data = df.groupby(['com_User'], as_index=False)['polarity'].sum()
+    elif Criterion == 'r_max':
         data = df.groupby(['com_User', 'Region'], as_index=False)[
             'polarity'].max()
-    elif Criterion == 'sum&max':
+    elif Criterion == 'max':
+        data = df.groupby(['com_User'], as_index=False)['polarity'].max()
+    elif Criterion == 'r_sum&max':
         data = df.groupby(['com_User', 'Region'], as_index=False)[
             'polarity'].agg({'sum': 'sum', 'max': 'max'})
         data['sum&max'] = np.nan
@@ -294,10 +283,15 @@ def prefer_party(DateFrame, Criterion, multiple=1):
         del data['sum']
         del data['max']
 
-    data = pd.merge(df, data, 'left',
-                    ['com_User', 'Region'])
-    data['perfer_party'] = np.nan
-    data['perfer_value'] = np.nan
+    if Criterion == 'r_sum' or Criterion == 'r_max' or Criterion == 'r_sum&max':
+        data = pd.merge(df, data, 'left',
+                        ['com_User', 'Region'])
+        data['perfer_party'] = np.nan
+        data['perfer_value_sum'] = np.nan
+    elif Criterion == 'sum' or Criterion == 'max':
+        data = pd.merge(df, data, 'left', 'com_User')
+        data['perfer_party'] = np.nan
+        data['polarity_sum'] = np.nan
 
     for i in tqdm(range(len(data['com_User']))):
         if data.iloc[i, 3] >= data.iloc[i, 4]*multiple and data.iloc[i, 3] > 0:    # 特殊條件
@@ -320,20 +314,38 @@ def prefer_party(DateFrame, Criterion, multiple=1):
 
     print('共有: ' + str(len(set(data.dropna()['com_User']))) + ' 個用戶')
 
+    #data.drop_duplicates('com_User', inplace=True)
     return data.dropna()
 
 
+polarity_candidate = df_merge.groupby(['Candidate'], as_index=False)[
+    'com_Type'].agg({'polarity': 'sum', 'n_com':'count'})
+
 polarity = df_merge.groupby(['com_User', 'Region', 'Party'], as_index=False)[
     'com_Type'].agg({'polarity': 'sum'})
+polarity_change = polarity.groupby(['com_User', 'Region', 'Party'])[
+    'polarity'].sum().unstack()
 
-test70 = pd.merge(test70, df_cand_info[[
-                  'Candidate', 'Region', 'Party']].drop_duplicates(), 'left', 'Candidate')
+polarity_o = prefer_party(polarity, condition2_1)
 
-test70 = pd.merge(test70, polarity, 'left', on=['com_User', 'Region', 'Party'])
-test70_p = test70[['com_User', 'Region', 'Party', 'polarity']]
+#test70 = pd.merge(test70, df_cand_info[['Candidate', 'Region', 'Party']].drop_duplicates(), 'left', 'Candidate')
 
-test_ca = prefer_party(test70_p, condition2_1)  # ★第二條件篩選結果(已包含條件一)
+#test70 = pd.merge(test70, polarity, 'left', on=['com_User', 'Region', 'Party'])
+#test70_p = test70[['com_User', 'Region', 'Party', 'polarity']]
 
+# test_ca = prefer_party(test70_p, condition2_1)  # ★第二條件篩選結果(已包含條件一)
+
+set_act_pol = pd.merge(active_com90, polarity_change, left_on=[
+                       'com_User', 'Region'], right_index=True)
+set_act_pol = set_act_pol[['com_User',
+                           'Region', 'n_com', 'KMT', 'DPP', 'OTHER']]
+set_act_pol['KMT_in_com'] = set_act_pol['KMT']/set_act_pol['n_com']
+set_act_pol['DPP_in_com'] = set_act_pol['DPP']/set_act_pol['n_com']
+set_act_pol['OTHER_in_com'] = set_act_pol['OTHER']/set_act_pol['n_com']
+
+set_act_pol_f = set_act_pol.loc[(set_act_pol['KMT_in_com'] >= 0.3) |
+                                (set_act_pol['DPP_in_com'] >= 0.3) |
+                                (set_act_pol['OTHER_in_com'] >= 0.3)]
 
 # %%
 ##############################
@@ -369,7 +381,7 @@ def response_time_info(DataFrame):
     Min = np.min(data)
     std = np.std(data)
 
-    print('單位  :       秒')
+    print('單位  :     分鐘')
     print('平均值: %8.2f' % mean)
     print('中位數: %8.2f' % median)
     print('最大值: %8.2f' % Max)
@@ -385,6 +397,14 @@ response_criterion = condition3_1
 time_mask = (df_timedelta['time_difference'] <= response_criterion)
 
 time_calist = df_timedelta.loc[time_mask]   # ★第三條件篩選結果
+
+# %%
+df_merge_com_n = df_merge.groupby('com_User', as_index=False)[
+    'com_Content'].count()
+
+#test_ca_time = pd.merge(test_ca, time_calist, 'left', 'com_User').dropna()
+#test_ca_time = pd.merge(test_ca_time, df_merge_com_n, 'left', 'com_User')
+
 
 
 # %%
@@ -466,14 +486,14 @@ def test_in_calist(namelist):
     return ca.loc[mask]
 
 
-def get_fliterdata(DataFrame, count_over=0, sum_over=0, percentage_over=0.3):
+def get_fliterdata(DataFrame, count_over=0, sum_over=0, percentage_over=0):
     mask = (DataFrame['count_com_1'] >= count_over) & (DataFrame['sum_com_1'] >= sum_over) & (
         DataFrame['com_%'] >= percentage_over)
     df_totest = DataFrame.loc[mask]
     return df_totest
 
 
-def get_nodelist(DataFrame, count_over=0, sum_over=0, percentage_over=0.3):
+def get_nodelist(DataFrame, count_over=0, sum_over=0, percentage_over=0):
     mask = (DataFrame['count_com_1'] >= count_over) & (DataFrame['sum_com_1'] >= sum_over) & (
         DataFrame['com_%'] >= percentage_over)
     df_totest = DataFrame.loc[mask]
@@ -484,7 +504,7 @@ def get_nodelist(DataFrame, count_over=0, sum_over=0, percentage_over=0.3):
     return node_list
 
 
-def get_edgelist(DataFrame, count_over=0, sum_over=0, percentage_over=0.3):
+def get_edgelist(DataFrame, count_over=0, sum_over=0, percentage_over=0):
     mask = (DataFrame['count_com_1'] >= count_over) & (DataFrame['sum_com_1'] >= sum_over) & (
         DataFrame['com_%'] >= percentage_over)
     df_totest = DataFrame.loc[mask]
@@ -493,7 +513,7 @@ def get_edgelist(DataFrame, count_over=0, sum_over=0, percentage_over=0.3):
 
     return list(zipped)
 
-# %%
+
 # 建議先使用get_datainfo()來決定過濾標準
 
 
@@ -519,14 +539,15 @@ partition = community.best_partition(G)
 pos = nx.spring_layout(G)
 plt.figure(figsize=(8, 8), dpi=72)
 plt.axis('off')
-nx.draw_networkx_nodes(G, pos, node_size=20, cmap=plt.cm.RdYlBu, node_color=list(partition.values()), label=account_dict_i)
+nx.draw_networkx_nodes(G, pos, node_size=20,
+                       cmap=plt.cm.RdYlBu, node_color=list(partition.values()))
 nx.draw_networkx_edges(G, pos, alpha=0.3)
 
-nx.write_gexf(G, r'E:\\research\\data\\圖庫\\test_5.gexf')
-#nx.draw(G)
-
+#nx.write_gexf(G, r'E:\\research\\data\\圖庫\\test_6.gexf')
+# nx.draw(G)
 
 # %%
+
 clique = pd.DataFrame(
     [pd.Series(partition).index.tolist(), pd.Series(partition).tolist()]).T
 clique.columns = ['com_User', 'user_Clique']
@@ -537,19 +558,19 @@ test_acc = pd.merge(test_acc, clique, 'left', 'com_User')   # ★第四條件篩
 
 
 # %%
-set1 = set(test_ca['com_User'])
+#set1 = set(test_ca['com_User'])
 set2 = set(time_calist['com_User'])
 set3 = set(test_acc['com_User'])
-
+set_act_pol_f_s = set(set_act_pol_f['com_User'])
 
 # %%
 test_acc = test_acc[['user_Clique', 'com_User', 'post_Author']]
 test_acc = pd.merge(test_acc, prefer_party(
-    set(test_acc['com_User']), 'sum'), 'left', 'com_User')
+    set(test_acc['com_User']), condition2_1), on='com_User')
 test_acc = test_acc[['user_Clique', 'com_User',
                      'post_Author', 'Region', 'prefer_party']]
-test_acc.dropna(inplace=True)
-test_acc.reset_index(drop=True, inplace=True)
+#test_acc.dropna(inplace=True)
+#test_acc.reset_index(drop=True, inplace=True)
 
 # %%
 test_acc_cnt_region = test_acc.groupby(
@@ -559,19 +580,27 @@ test_acc_cnt_region_tomerge = test_acc_cnt_region.groupby(
 
 test_acc_cnt_region = pd.merge(
     test_acc_cnt_region, test_acc_cnt_region_tomerge, 'left', 'user_Clique')
-test_acc_cnt_region.columns = ['user_Clique', 'Region',	'com_User',	'com_User_sum']
-test_acc_cnt_region['com_User_%'] = test_acc_cnt_region['com_User']/test_acc_cnt_region['com_User_sum']
+test_acc_cnt_region.columns = ['user_Clique',
+                               'Region',	'com_User_n',	'com_User_sum']
+test_acc_cnt_region['com_User_%'] = test_acc_cnt_region['com_User_n'] / \
+    test_acc_cnt_region['com_User_sum']
 
-cli_mask = (test_acc_cnt_region['com_User_sum'] >= 10) & (
-    test_acc_cnt_region['com_User'] >= 5) & (test_acc_cnt_region['com_User_%']>=0.25)
+cli_mask = (test_acc_cnt_region['com_User_sum'] >= 0) & (
+    test_acc_cnt_region['com_User_n'] >= 0) & (test_acc_cnt_region['com_User_%'] >= 0.6)
 test_acc_cnt_region = test_acc_cnt_region.loc[cli_mask]
 
-test_acc_party = pd.merge(test_acc_cnt_region, test_acc, 'left', on=['user_Clique','Region'])
-set4 = set(test_acc_party['com_User_y'])
+test_acc_party = pd.merge(test_acc_cnt_region, test_acc, 'left', on=[
+                          'user_Clique', 'Region'])
+set4 = set(test_acc_party['com_User'])
 
 
 # %%
-test_acc_party.loc[(test_acc_party['com_User_y'].isin(set(set1 & set2 & set4)))].to_excel(path+'fin.xlsx',index=False)
+
+test_acc_set = test_acc.loc[(test_acc['com_User'].isin(set_act_pol_f_s))]
+test_acc_set.columns = ['user_Clique',
+                        'com_User', 'post_Author', 'Region', 'Party']
+test_acc_set = pd.merge(test_acc_set, polarity[[
+                        'com_User', 'Region', 'Party', 'polarity']], 'left', ['com_User', 'Region', 'Party'])
 
 
 # %%

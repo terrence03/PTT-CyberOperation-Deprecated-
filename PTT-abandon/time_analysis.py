@@ -1,4 +1,5 @@
 # %%
+from pylab import mpl
 import pandas as pd
 import sqlite3
 import seaborn as sns
@@ -87,8 +88,9 @@ def clean_namelist(filename):
 
 #namelist = pd.DataFrame(clean_namelist(
 #    r'E:\\research\\data\\砍除帳號名單.txt'), columns=['Author'])
-namelist = pd.read_excel(r'D:\\research\\data\\alldata\\fin.xlsx')
-namelist = namelist[['com_User_y']]
+namelist = pd.read_excel(r'E:\\research\\df.xlsx', sheet_name='Sheet1')
+namelist = set(namelist['com_User'])|set(namelist['post_Author'])
+namelist = pd.DataFrame(namelist)
 namelist.columns = ['Author']
 
 df_W_precentage_cy = pd.merge(
@@ -100,33 +102,38 @@ df_H_precentage_cy = pd.merge(
 df_H_precentage_cy.dropna(inplace=True)
 
 # %%
-fig = plt.figure(figsize=(10, 12), dpi=300)
+mpl.rcParams['font.sans-serif'] = ['Microsoft JhengHei']  # 指定默认字体
+
+fig = plt.figure(figsize=(8, 12), dpi=300)
 
 plt.subplot(2,1,1)
+plt.plot(list(range(1, 8)), get_W_avgprecentage(
+    df_W_precentage_cy), 'o-', label='網軍', color='blue')
 plt.plot(list(range(1,8)), get_W_avgprecentage(
-    df_W_precentage), 'o-', label='nomal_user')
-plt.plot(list(range(1,8)), get_W_avgprecentage(
-    df_W_precentage_cy), 's-', label='cyber_army')
+    df_W_precentage), 's--', label='一般用戶', color='orange')
+
 plt.legend()
 plt.xticks(range(1,8))
-plt.xlabel('Weekday')
-plt.ylabel('Frequency%')
+plt.xlabel('星期', fontsize=12)
+plt.ylabel('頻率百分比', fontsize=12)
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
-plt.title('online%')
+plt.title('網軍每天上線頻率', fontsize=15)
+#plt.savefig(r'E:\\research\\data\\圖庫\\frequency_vs_3_1.png')
 
 plt.subplot(2,1,2)
 plt.plot(list(range(24)), get_H_avgprecentage(
-    df_H_precentage), 'o-', label='nomal_user')
+    df_H_precentage_cy), 'o-', label='網軍', color='blue')
 plt.plot(list(range(24)), get_H_avgprecentage(
-    df_H_precentage_cy), 's-', label='cyber_army')
+    df_H_precentage), 's--', label='一般用戶', color='orange')
+
 plt.legend()
 plt.xticks(range(24))
-plt.xlabel('Time of day')
-plt.ylabel('Frequency%')
+plt.xlabel('時間', fontsize=12)
+plt.ylabel('頻率百分比', fontsize=12)
 plt.grid(True, linestyle="--", color='gray', linewidth='0.5', axis='both')
-plt.title('online%')
+plt.title('網軍每小時上線頻率', fontsize=15)
 
-plt.savefig(r'E:\\research\\data\\圖庫\\frequency_vs_2.png')
+plt.savefig(r'E:\\research\\data\\圖庫\\frequency_vs_3_4.png')
 plt.show()
 
 # %%
